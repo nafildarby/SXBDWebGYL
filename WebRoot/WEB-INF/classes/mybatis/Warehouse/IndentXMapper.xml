@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="IndentXMapper"> 
+    <cache type="org.mybatis.caches.ehcache.LoggingEhcache"/>    
+     
+    <!-- 查询库存单商品列表信息 -->
+	<select id="findByBarCode" parameterType="pd" resultType="pd" useCache="false">
+	  	SELECT Id ,
+	       	InventoryQuantity ,
+	       	ProductBarCode ,
+	       	Status ,
+	       	WarehouseNo
+		FROM 
+			T_Warehouse_Inventory
+		WHERE 
+			ProductBarCode=#{BarCode} AND WarehouseNo=#{WhsId}
+	</select>  
+     
+     <!-- 查询采购入库单商品列表信息 -->
+	<select id="listGoodsbyPurchase" parameterType="pd" resultType="pd" useCache="false">
+	  	SELECT  
+	  		Abbreviation,
+	        BarCode,
+	        Comment,
+	        CostPrice AS Price,
+	        ProductName,
+	        PurchaseNo,
+	        Quantity as TotalNum,
+	        Status,
+	        StorageQuantity,
+	        SupplierName AS EnterpriseName,
+	        Unit AS ComItemName
+	 	FROM 
+	 		T_Purchase_PurchaseDetail
+	 	WHERE 
+	 		PurchaseNo=#{PurchaseNo}
+	</select> 
+    
+    <!-- 查询采购入库单列表信息 -->
+	<select id="PurchaselistPage" parameterType="pd" resultType="pd" useCache="false">
+		 SELECT 
+		   Comment ,
+	       Id ,
+	       OrderPerson ,
+	       OrderTime ,
+	       PurchaseNo ,
+	       Status 
+	     FROM 
+	     	T_Purchase_PurchaseOrder 
+      <if test="pd.q != null and pd.q != ''"><!-- 关键词检索 --> 
+	     WHERE    
+			(PurchaseNo LIKE '%' + #{pd.q} + '%'
+			or   OrderPerson LIKE '%' + #{pd.q} + '%'
+			or   CONVERT(varchar,OrderTime,120)  LIKE '%'+ #{pd.q})
+		</if>
+	</select>
+    
+    
+	<!-- 查询采购入库单列表信息 -->
+	<select id="IndentlistPage" parameterType="pd" resultType="pd" useCache="false">
+			SELECT  TOP 100 PERCENT
+			   gr.CollectTime ,
+		       gr.Comment ,
+		       gr.GoodsReceiptNo ,
+		       gr.Id ,
+		       gr.OrderNo ,
+		       gr.Status ,
+		       gr.WarehouseNo,
+		       gr.OpName,
+		       gr.IncomeCode,
+		       gr.IncomeBatch,
+		       w.WarehouseName,
+			   gr.SupplierId,
+			   s.EnterpriseName,
+			   gr.ApprovalStatus
+	        FROM 
+				T_Warehouse_GoodsReceipt gr,T_Warehouse_Warehouse w,T_Admin_Supplier s
+			WHERE  
+				gr.SupplierId=s.Id AND gr.WarehouseNo=w.WarehouseNo and gr.Status=1
+	        	
+	    <if test="pd.OrderNo != null and pd.OrderNo != ''"><!-- 关键词检索 -->
+			and  gr.OrderNo LIKE '%' + #{pd.OrderNo} + '%' 
+		</if>
+		<if test="pd.IncomeBatch != null and pd.IncomeBatch != ''"><!-- 关键词检索 -->
+			and  gr.IncomeBatch LIKE '%' + #{pd.IncomeBatch} + '%' 
+		</if>
+		<if test="pd.IncomeCode != null and pd.IncomeCode != ''"><!-- 关键词检索 -->
+			and  gr.IncomeCode LIKE '%' + #{pd.IncomeCode} + '%' 
+		</if> 
+		ORDER BY CollectTime DESC	
+	</select>
+	
+	<!-- 修改 -->
+	<update id="updateInventory" parameterType="pd" flushCache="false">
+		UPDATE 
+			T_Warehouse_Inventory
+		SET 
+		    InventoryQuantity = #{InventoryQuantity} 
+		WHERE 
+			Id  = #{Id}  
+	</update>
+	
+	 
+	
+	 <!-- 新增库存商品信息 -->
+	 <insert id="saveInventory" parameterType="pd" flushCache="false">		 
+ 		INSERT INTO T_Warehouse_Inventory
+           (WarehouseNo,ProductBarCode,InventoryQuantity,Status)
+     	VALUES
+     	 (#{WarehouseNo},#{ProductBarCode},#{InventoryQuantity},#{Status}) 
+	</insert>
+	
+	<!-- 新增入库信息 -->
+	<insert id="saveWhsIndent" parameterType="pd" flushCache="false">		 
+ 		INSERT INTO T_Warehouse_GoodsReceipt
+           (OrderNo,GoodsReceiptNo,WarehouseNo,Comment,CollectTime,Status,
+            OpName,IncomeCode,IncomeBatch,SupplierId,ApprovalStatus)
+	     VALUES 
+	     	(#{orderNo},#{IncomeCode},#{WhsId},#{Note},#{IncomeDate},#{StatusFlag},
+	     	 #{OpName},#{IncomeCode},#{IncomeBatch},#{SupplierId},#{ApprovalStatus})  
+	</insert> 
+	
+	
+	  <!-- 这个是参数的类型-->
+	<insert id="saveGoodDetail"  parameterType="list" flushCache="false">		 
+ 		INSERT INTO T_Warehouse_GoodsDetail
+           (GoodsReceiptNo,SupplierName,ProductName,BarCode,Price,TotalNum,Unit,Comment,ProductNo)
+     	VALUES
+     	<!-- 这个是参数名称 -->
+     <foreach item="item" index="index" collection="list" separator="," >
+       	(#{item.GoodsReceiptNo},#{item.EnterpriseName},#{item.ProductName},#{item.BarCode},
+       	 #{item.Price},#{item.TotalNum},#{item.ComItemName},#{item.Comment},#{item.BarCode})
+     </foreach>    
+	</insert> 
+	  
+ 	<!-- 删除入库信息 -->
+	<delete id="deleteIndent" parameterType="pd" flushCache="false"> 
+		Update   
+			T_Warehouse_GoodsReceipt
+		set 
+			Status=0
+		where 
+			Id = #{Id}  
+	</delete> 
+	
+	
+	<!-- 通过IncomeCode获取数据 -->
+	<select id="findByIndent" parameterType="pd" resultType="pd" useCache="false">
+		SELECT  
+            gr.CollectTime ,
+            gr.Comment ,   
+            gr.GoodsReceiptNo ,
+            gr.Id , 
+            gr.IncomeBatch ,
+            gr.IncomeCode , 
+            gr.OpName ,
+            gr.OrderNo , 
+            gr.Status , 
+            w.WarehouseName ,
+            gr.WarehouseNo,
+            gr.SupplierId,
+            s.EnterpriseName,
+            gr.ApprovalStatus
+        FROM 
+			T_Warehouse_GoodsReceipt gr,T_Warehouse_Warehouse w,T_Admin_Supplier s
+		WHERE  
+			gr.SupplierId=s.Id AND gr.WarehouseNo=w.WarehouseNo  and GoodsReceiptNo = #{IncomeCode}
+	</select>
+	
+	<!-- 通过IncomeCode获取入库商品明细数据 -->
+	<select id="findByGoods" parameterType="pd" resultType="pd" useCache="false">
+		 SELECT BarCode ,
+	        CategoryName ,
+	        GoodsReceiptNo ,
+	        Id ,
+	        Price ,
+	        ProductName ,
+	        ProductNo ,
+	        SupplierName ,
+	        TotalNum ,
+	        Unit,
+	        Comment
+		 FROM 
+		 	T_Warehouse_GoodsDetail
+		 WHERE 
+		 	GoodsReceiptNo = #{IncomeCode}
+	</select>
+	
+	<!-- 修改 -->
+	<update id="updateFlowStatus" parameterType="pd" flushCache="false">
+		UPDATE 
+			T_Warehouse_GoodsReceipt
+		SET 
+		    ApprovalStatus =#{auditStatus}
+		WHERE 
+			IncomeCode = #{ApplyNo}
+	</update> 
+	
+</mapper>

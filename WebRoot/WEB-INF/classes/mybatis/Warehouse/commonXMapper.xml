@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="commonXMapper"> 
+    <cache type="org.mybatis.caches.ehcache.LoggingEhcache"/>   
+    
+    <!-- 查询所有的普通出库信息 -->
+    <select id="CommonlistPage" parameterType="pd" resultType="pd" useCache="false"> 
+		SELECT	 TOP 100 PERCENT 
+			a.Comment ,
+	        a.Id , 
+	       	a.OutBoundNo ,
+	        a.OutBoundPerson ,
+	       	a.OutBoundTime , 
+	       	a.Status,
+	       	a.AllotNo, 
+	      	b.WarehouseName AS OutWarehouseName, 
+	       	c.WarehouseName AS InWarehouseName,
+	       	a.ApprovalStatus,
+	       	a.InWarehouseNo,
+	       	a.OutWarehouseNo
+		FROM 
+			T_Warehouse_OutBound a, T_Warehouse_Warehouse b, T_Warehouse_Warehouse c
+		WHERE 
+			a.OutWarehouseNo = b.WarehouseNo AND a.InWarehouseNo = c.WarehouseNo AND a.AllotNo='1' and a.Status=1
+		 <if test="pd.OutBoundNo != null and pd.OutBoundNo != ''"><!-- 关键词检索 -->
+			and  a.OutBoundNo LIKE '%' + #{pd.OutBoundNo} + '%' 
+		</if> 
+		ORDER BY OutBoundTime DESC	
+	</select> 
+	 
+	<!-- 根据普通入库单号查询入库商品信息 -->
+    <select id="findincomGoods" parameterType="pd" resultType="pd" useCache="false">
+		 SELECT  
+			gd.BarCode ,
+	        gd.CategoryName , 
+	        gd.Comment , 
+	        gd.GoodsReceiptNo ,   
+	        gd.Price , 
+	        gd.ProductName ,
+	        gd.ProductNo ,  
+	        gd.SupplierName ,
+	        gd.TotalNum ,
+	        gd.Unit , 
+	        it.InventoryQuantity
+		FROM 
+			dbo.T_GYL_WhsIncome w,T_Warehouse_Inventory it,T_Warehouse_GoodsDetail gd
+		
+		WHERE 
+			w.WhsId=it.WarehouseNo AND w.IncomeCode=gd.GoodsReceiptNo AND gd.BarCode=it.ProductBarCode
+			and  w.IncomeCode=#{incomcode} AND it.WarehouseNo=#{outWhId} 
+	</select>  
+	
+	<!-- 根据订单单号查询入库商品信息 -->
+	<select id="findindentGoods" parameterType="pd" resultType="pd" useCache="false"> 
+	 	SELECT  
+			gd.BarCode ,
+	        gd.CategoryName , 
+	        gd.Comment , 
+	        gd.GoodsReceiptNo ,   
+	        gd.Price , 
+	        gd.ProductName ,
+	        gd.ProductNo ,  
+	        gd.SupplierName ,
+	        gd.TotalNum ,
+	        gd.Unit , 
+	        it.InventoryQuantity
+		FROM 
+			T_Warehouse_GoodsReceipt gr,T_Warehouse_Inventory it,T_Warehouse_GoodsDetail gd
+		
+		WHERE 
+			gr.WarehouseNo=it.WarehouseNo AND gr.GoodsReceiptNo=gd.GoodsReceiptNo AND gd.BarCode=it.ProductBarCode
+		 	and gr.GoodsReceiptNo=#{incomcode} AND it.WarehouseNo=#{outWhId}  
+	</select>  
+	
+	<!-- 根据出库仓库和商品查询仓库商品信息 -->
+	<select id="findByWhsId" parameterType="pd" resultType="pd" useCache="false"> 
+	 	 SELECT Id ,
+	       InventoryQuantity ,
+	       ProductBarCode ,
+	       Status ,
+	       WarehouseNo
+		FROM 
+			T_Warehouse_Inventory 
+		WHERE 
+			ProductBarCode=#{BarCode} AND WarehouseNo=#{WhsId}
+	</select>  
+	  
+	<!-- 根据入库仓库和商品查询仓库商品信息 -->
+	<select id="findByinWHNo" parameterType="pd" resultType="pd" useCache="false"> 
+	 	 SELECT Id ,
+	       InventoryQuantity ,
+	       ProductBarCode ,
+	       Status ,
+	       WarehouseNo
+		FROM 
+			T_Warehouse_Inventory 
+		WHERE 
+			ProductBarCode=#{BarCode} AND WarehouseNo=#{inWHNo}
+	</select>  
+	 
+	 
+	 <!-- 查询普通出库信息-->
+	<select id="findCommon" parameterType="pd" resultType="pd" useCache="false"> 
+		select  
+		  	OutBoundNo,OutWarehouseNo,InWarehouseNo 
+		from 
+		  	T_Warehouse_OutBound 
+		where 
+		  	Id=#{Id}
+	</select>  
+	
+	<!-- 查询商品库存出库信息-->
+	<select id="findByOutBarCode" parameterType="pd" resultType="pd" useCache="false"> 
+		SELECT  
+			Id ,
+	        InventoryQuantity ,
+	        ProductBarCode ,
+	        Status ,
+	        WarehouseNo
+		 FROM  
+		 	T_Warehouse_Inventory 
+		 WHERE 
+		 	ProductBarCode=#{BarCode} AND WarehouseNo=#{OutWarehouseNo}
+	</select>
+	
+	<!-- 查询商品库存入库信息-->
+	<select id="findByInBarCode" parameterType="pd" resultType="pd" useCache="false"> 
+		SELECT  
+			Id ,
+	        InventoryQuantity ,
+	        ProductBarCode ,
+	        Status ,
+	        WarehouseNo
+		 FROM  
+		 	T_Warehouse_Inventory 
+		 WHERE 
+		 	ProductBarCode=#{BarCode} AND WarehouseNo=#{InWarehouseNo}
+	</select>
+	
+	 <!-- 查询普通出库商品信息-->
+	<select id="findByGoods" parameterType="pd" resultType="pd" useCache="false"> 
+		 	SELECT 
+		 	   BarCode ,
+		       Comment ,
+		       DeployNum ,
+		       Id ,
+		       OutboundNo ,
+		       OutNumber ,
+		       ProductName ,
+		       Unit
+			FROM 
+				T_Warehouse_OutBoundDetail
+			WHERE 
+				OutboundNo=#{OutBoundNo}
+	</select>  
+	
+	<!-- 修改 -->
+	<update id="updateInventory" parameterType="pd" flushCache="false">
+		UPDATE 
+			T_Warehouse_Inventory
+		SET 
+		    InventoryQuantity = #{InventoryQuantity} 
+		WHERE 
+			Id  = #{Id}  
+	</update>
+	
+	
+	<!-- 修改 -->
+	<update id="updateCommon" parameterType="pd" flushCache="false">
+		 UPDATE 
+		 	T_Warehouse_OutBoundDetail 
+		 SET 
+		 	OutNumber=0,DeployNum=0 
+		 WHERE Id=#{Id}
+	</update>
+	
+	<!-- 新增入库信息 -->
+	<insert id="saveWhsOut" parameterType="pd" flushCache="false">		 
+ 		INSERT INTO T_Warehouse_OutBound
+           (OutBoundNo,OutWarehouseNo,OutBoundPerson,OutBoundTime,Comment,Status,InWarehouseNo,AllotNo,ApprovalStatus)
+     VALUES 
+	      (#{OutCode},#{outWHNo},#{OpName},#{OutTime},#{Note},#{StatusFlag},#{inWHNo},'1',#{ApprovalStatus})  
+	</insert>   
+	
+	  <!-- 这个是明细数据-->
+	<insert id="saveOutDetail"  parameterType="list" flushCache="false">		 
+ 		INSERT INTO T_Warehouse_OutBoundDetail
+           (OutboundNo,ProductName,BarCode,OutNumber,Unit,Comment,DeployNum)
+    	VALUES          
+     	<!-- 这个是参数名称 -->
+     <foreach item="item" index="index" collection="list" separator="," >
+       	(#{item.OutboundNo},#{item.ProductName},#{item.BarCode},#{item.DeployNum},
+       	 #{item.Unit},#{item.Comment},#{item.DeployNum})
+     </foreach>    
+	</insert>   
+	
+	<!-- 查询出库的单商品列表信息 -->
+	<select id="findByOutGoods" parameterType="pd" resultType="pd" useCache="false">
+		SELECT 
+		 	BarCode ,
+	       	Comment ,
+	       	DeployNum ,
+	       	Id ,
+	       	OutboundNo ,
+	       	OutNumber ,
+	       	ProductName ,
+	       	Unit
+		FROM  
+			T_Warehouse_OutBoundDetail
+		WHERE 
+			OutboundNo=#{OutBoundNo}
+	</select>
+	
+	<!-- 查询出库的单据信息 -->
+	<select id="findByOut" parameterType="pd" resultType="pd" useCache="false">   
+		 SELECT	  
+			a.Comment ,
+	        a.Id , 
+	       	a.OutBoundNo ,
+	        a.OutBoundPerson ,
+	       	a.OutBoundTime , 
+	       	a.Status,
+	       	a.AllotNo, 
+	       	b.WarehouseName AS OutWarehouseName, 
+	       	c.WarehouseName AS InWarehouseName,
+	       	a.ApprovalStatus,
+	       	a.InWarehouseNo,
+	       	a.OutWarehouseNo
+		FROM 
+			T_Warehouse_OutBound a, T_Warehouse_Warehouse b, T_Warehouse_Warehouse c
+		WHERE 
+			a.OutWarehouseNo = b.WarehouseNo AND a.InWarehouseNo = c.WarehouseNo AND a.OutBoundNo=#{OutBoundNo}   
+	</select>  
+	
+	<!--删除 (修改)-->
+	<delete id="deleteCommon" parameterType="pd" flushCache="false">
+		UPDATE 
+			T_Warehouse_OutBound
+		SET 
+		   	Status = 0
+		WHERE 
+			Id  = #{Id}  
+	</delete>
+	
+	
+	<!-- 修改 -->
+	<update id="updateFlowStatus" parameterType="pd" flushCache="false">
+		UPDATE 
+			T_Warehouse_OutBound
+		SET 
+		    ApprovalStatus =#{auditStatus}
+		WHERE 
+			OutBoundNo = #{ApplyNo}
+	</update> 
+	 
+	 
+	
+	
+</mapper>

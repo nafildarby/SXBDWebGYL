@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ApplyAuditMapper">
+	
+    <cache type="org.mybatis.caches.ehcache.LoggingEhcache"/>  
+    
+    <!-- 根据角色Id查询待办事项 -->
+	<select id="findTodolistByRoleId" parameterType="page" resultType="pd" useCache="false">
+	  SELECT a.id,
+			 a.MenuName,
+			 a.ApplyNo,
+			 a.ApplyTime FROM dbo.T_GYL_FlowDetail f, dbo.T_GYL_ApplyAudit a
+       WHERE f.EndRole = #{pd.RoleId} AND f.CodeNo = a.FlowNo AND a.CurrentStep = f.FlowOrder AND a.Status = 0
+	</select>
+	
+	<!-- 查询审批明细信息 -->
+	<select id="findByRecord " parameterType="pd" resultType="pd" useCache="false"> 
+		SELECT 
+			count(ApplyNo) count  
+		FROM 
+			T_GYL_ApplyRecord 
+		where 
+			ApplyNo=#{applyNo}  
+	</select>  
+	
+	<!-- 修改待办事项申请信息 -->
+	<update id="editApplyAudit" parameterType="pd" flushCache="false">		 
+ 		UPDATE dbo.T_GYL_ApplyAudit set
+           Status = 1
+           WHERE ApplyNo = #{ApplyNo}
+	</update>
+</mapper>

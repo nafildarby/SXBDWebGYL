@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="SupplierMapper">
+	
+    <cache type="org.mybatis.caches.ehcache.LoggingEhcache"/>  
+    
+    <!-- 商品列表 -->
+	<select id="listAllSupplier" parameterType="page" resultType="pd" useCache="false">
+		SELECT Id ,
+	       	EnterpriseName,LinkmanName,Telephone,LealPerson,CorporateType,Fax,IndustryInvolved,
+	       	OpeningBank,PrimaryService,AccountNo,BrandName,BrandLevel,RecomLlevel,EnterQualification,
+	       	Address,WebSite,Email,CreateDate,Comment,Status 
+	    FROM 
+			T_Admin_Supplier
+		WHERE 
+			Status=1
+	</select>
+	
+	<!-- 查询采购入库单列表信息 -->
+	<select id="supplierlistPage" parameterType="pd" resultType="pd" useCache="false">
+		SELECT  TOP 100 PERCENT
+			 AccountNo,Address,BrandLevel,BrandName,Comment,CorporateType,CreateDate,Email,
+	         EnterpriseName,EnterQualification,Fax,Id,IndustryInvolved,LealPerson,LinkmanName,
+	         OpeningBank,PrimaryService,RecomLlevel,Status,Telephone,WebSite 
+  		FROM 
+  			T_Admin_Supplier
+  		WHERE 
+  			Status=1 
+	    <if test="pd.EnterpriseName != null and pd.EnterpriseName != ''"><!-- 关键词检索 -->
+			and  gr.OrderNo LIKE '%' + #{pd.EnterpriseName} + '%' 
+		</if>
+		<if test="pd.LinkmanName != null and pd.LinkmanName != ''"><!-- 关键词检索 -->
+			and  gr.IncomeBatch LIKE '%' + #{pd.LinkmanName} + '%' 
+		</if> 
+		ORDER BY CreateDate DESC	
+	</select>
+	
+	
+	 <!-- 新增供应商信息 -->
+	 <insert id="saveSupplier" parameterType="pd" flushCache="false">		 
+ 		INSERT INTO T_Admin_Supplier
+        	(EnterpriseName,LinkmanName,Telephone,LealPerson,Fax,OpeningBank,
+		     AccountNo,Address,WebSite,Email,CreateDate,Comment,Status)
+		VALUES 
+			(#{EnterpriseName},#{LinkmanName},#{Telephone},#{LealPerson},#{Fax},#{OpeningBank},
+			#{AccountNo},#{Address},#{WebSite},#{Email},#{CreateDate},#{Comment},#{Status})		
+	</insert> 
+	
+	 
+	<select id="findSupplierById" parameterType="pd" resultType="pd" useCache="false">
+		SELECT  
+			 AccountNo,Address,BrandLevel,BrandName,Comment,CorporateType,CreateDate,Email,
+	         EnterpriseName,EnterQualification,Fax,Id,IndustryInvolved,LealPerson,LinkmanName,
+	         OpeningBank,PrimaryService,RecomLlevel,Status,Telephone,WebSite 
+  		FROM 
+  			T_Admin_Supplier
+  		WHERE 
+  			Id=#{Id}
+	</select>
+	
+	<update id="editSupplier" parameterType="pd" flushCache="false">
+		UPDATE 
+			 T_Admin_Supplier
+		SET
+        	 EnterpriseName =#{EnterpriseName},
+        	 LinkmanName 	=#{LinkmanName},
+        	 Telephone		=#{Telephone},
+        	 LealPerson		=#{LealPerson},
+        	 Fax			=#{Fax},
+        	 OpeningBank	=#{OpeningBank},
+		     AccountNo		=#{AccountNo},
+		     Address		=#{Address},
+		     WebSite		=#{WebSite},
+		     Email			=#{Email},
+		     CreateDate		=#{CreateDate},
+		     Comment		=#{Comment}		     
+		WHERE 
+			Id = #{Id}
+	</update> 
+	 
+	<delete id="deleteSupplier" parameterType="pd" flushCache="false">
+		UPDATE 
+			T_Admin_Supplier
+		set 
+			Status=0
+		where 
+			Id = #{Id}
+	</delete> 
+	
+	<select id="findGoodsBySupplierId" parameterType="pd" resultType="pd" useCache="false">
+		 SELECT 
+		 	Abbreviation,BarCode,CategoryId,ComboItemId,Comment,Id,IsGroup,IsLease,LeaseType,
+	       	Pledge,Price,ProductName,ProductNo,Rental,SpareCode,Status,SupplierId,TaxRate,TimingId
+	 	 FROM  
+	 	 	T_Product_ProductInfo
+	 	 WHERE 
+	 	 	SupplierId=#{Id}
+	</select>
+	
+	
+	<select id="findInWHNoBySupplierId" parameterType="pd" resultType="pd" useCache="false">
+		SELECT 
+			ApprovalStatus ,
+	       	CollectTime ,
+	       	Comment ,
+	       	GoodsReceiptNo ,
+	       	Id ,
+	       	IncomeBatch ,
+	       	IncomeCode ,
+	       	OpName ,
+	       	OrderNo ,
+	       	Status ,
+	       	SupplierId ,
+	       	WarehouseNo
+	 	FROM  
+	 		T_Warehouse_GoodsReceipt 
+	 	WHERE 
+	 		SupplierId=#{Id}
+	</select>
+	
+	
+	
+</mapper>

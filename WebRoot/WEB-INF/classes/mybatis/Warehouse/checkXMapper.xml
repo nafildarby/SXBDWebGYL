@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="checkXMapper"> 
+    <cache type="org.mybatis.caches.ehcache.LoggingEhcache"/>   
+    
+    <!-- 查询所有的调拨信息 -->
+    <select id="ChecklistPage" parameterType="pd" resultType="pd" useCache="false">
+		 SELECT TOP 100 PERCENT 
+		 	c.CheckMan ,
+	       	c.CheckNo ,
+		   	c.CheckTime ,
+	       	c.CheckWarehouseNo ,
+	       	c.Id ,
+	       	c.Status,
+	       	w.WarehouseName,
+	       	c.ApprovalStatus
+		FROM 
+			T_Warehouse_CheckGoods c,T_Warehouse_Warehouse w 
+		WHERE 
+			w.WarehouseNo=c.CheckWarehouseNo and  c.Status=1
+		<if test="pd.CheckNo != null and pd.CheckNo != ''"><!-- 关键词检索 -->
+			and  c.CheckNo LIKE '%' + #{pd.CheckNo} + '%' 
+		</if> 
+		ORDER BY CheckTime DESC	
+	</select> 	 
+	 
+	 
+	<!-- 根据盘点仓库查询商品信息 -->
+    <select id="findGoods" parameterType="pd" resultType="pd" useCache="false">
+		  SELECT  
+		  	p.Comment , 
+	        i.InventoryQuantity , 
+	        i.ProductBarCode ,
+	        p.ProductName ,  
+	        c.ComItemName 
+		 FROM 
+		 	dbo.T_Product_ProductInfo p,dbo.T_Warehouse_Inventory i,dbo.T_System_ComboItem c
+		 WHERE 
+		 	i.ProductBarCode=p.BarCode AND p.ComboItemId=c.Id AND i.WarehouseNo=#{WHNo}
+	</select>   
+	
+	
+	  
+	<!-- 根据盘点仓库和商品查询仓库商品信息 -->
+	<select id="findByWHCheck" parameterType="pd" resultType="pd" useCache="false"> 
+	 	 SELECT Id ,
+	       InventoryQuantity ,
+	       ProductBarCode ,
+	       Status ,
+	       WarehouseNo
+		FROM 
+			T_Warehouse_Inventory 
+		WHERE 
+			ProductBarCode=#{BarCode} AND WarehouseNo=#{WHNo}
+	</select>  
+	 
+
+	
+	<!-- 修改 -->
+	<update id="updateInventory" parameterType="pd" flushCache="false">
+		UPDATE 
+			T_Warehouse_Inventory
+		SET 
+		    InventoryQuantity = #{InventoryQuantity} 
+		WHERE 
+			Id  = #{Id}  
+	</update>
+	  
+	 
+	<!-- 新增入库信息 -->
+	<insert id="saveCheck" parameterType="pd" flushCache="false">		 
+ 		INSERT INTO T_Warehouse_CheckGoods
+           (CheckNo,CheckWarehouseNo,CheckMan,CheckTime,Status,ApprovalStatus)
+     VALUES 
+	      (#{CheckNo},#{CheckWarehouseNo},#{CheckMan},#{CheckTime},#{Status},#{ApprovalStatus})  
+	</insert>   
+	
+	  <!-- 这个是明细数据-->
+	<insert id="saveDetail"  parameterType="list" flushCache="false">		 
+ 		INSERT INTO T_Warehouse_CheckDetails
+           (CheckNo,GoodsName,BarCode,Quantity,Unit,Comment,CheckNum,differValue)
+    	VALUES          
+     	<!-- 这个是参数名称 -->  
+     <foreach item="item" index="index" collection="list" separator="," >
+       	(#{item.CheckNo},#{item.ProductName},#{item.ProductBarCode},#{item.InventoryQuantity},
+       	 #{item.ComItemName},#{item.Comment},#{item.CheckNum},#{item.differValue})
+     </foreach>    
+	</insert>    
+	
+	<!-- 查询盘点的单商品列表信息 -->
+	<select id="findByCheckGoods" parameterType="pd" resultType="pd" useCache="false">
+		SELECT  
+			BarCode ,
+	        CheckNo ,
+	        CheckNum ,
+	        Comment ,
+	        GoodsName ,
+	        Id ,
+	        Quantity ,
+	        Unit,
+	        differValue
+		FROM 
+			T_Warehouse_CheckDetails 
+		WHERE 
+			CheckNo=#{CheckNo}
+	</select>
+	
+	<!-- 查询盘点单据信息 -->
+	<select id="findByCheck" parameterType="pd" resultType="pd" useCache="false">
+		SELECT 
+		   c.CheckMan ,
+	       c.CheckNo ,
+		   c.CheckTime ,
+	       c.CheckWarehouseNo ,
+	       c.Id ,
+	       c.Status,
+	       w.WarehouseName,
+	       c.ApprovalStatus
+		FROM 
+			T_Warehouse_CheckGoods c,T_Warehouse_Warehouse w 
+		WHERE 
+			w.WarehouseNo=c.CheckWarehouseNo and CheckNo=#{CheckNo}
+	</select>  
+	
+	<!-- 查询盘点单据信息 -->
+	<select id="findCheck" parameterType="pd" resultType="pd" useCache="false">
+		SELECT 
+		   CheckMan ,
+	       CheckNo ,
+		   CheckTime ,
+	       CheckWarehouseNo ,
+	       Id ,
+	       Status,
+	       c.ApprovalStatus 
+		FROM 
+			T_Warehouse_CheckGoods
+		WHERE 
+			Id=#{Id}
+	</select>  
+	
+	<!-- 删除 -->
+	<delete id="deleteCheck" parameterType="pd" flushCache="false">
+		UPDATE 
+			T_Warehouse_CheckGoods
+		SET 
+		   	Status = 0
+		WHERE 
+			Id  = #{Id}  
+	</delete>
+	
+	<!-- 修改 -->
+	<update id="updateFlowStatus" parameterType="pd" flushCache="false">
+		UPDATE 
+			T_Warehouse_CheckGoods
+		SET 
+		    ApprovalStatus =#{auditStatus}
+		WHERE 
+			CheckNo = #{ApplyNo}
+	</update> 
+	
+		
+	
+</mapper>

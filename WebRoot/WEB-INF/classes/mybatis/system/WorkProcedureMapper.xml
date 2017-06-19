@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="WorkProcedureMapper">
+	
+    <cache type="org.mybatis.caches.ehcache.LoggingEhcache"/>  
+    
+	<!--流程分页列表 -->
+	<select id="listPageworkProcedure" parameterType="page" resultType="pd" useCache="false">
+		SELECT  TOP 100 PERCENT 
+		   Id ,
+	       Name ,
+	       CodeNo ,
+	       StartDate ,
+	       Status ,
+       Description FROM dbo.T_GYL_Flow
+		WHERE Status = 1
+		<if test="pd.ProductName != null and pd.ProductName != ''">
+			and Name LIKE '%' + #{pd.Name} + '%'
+		</if>
+		ORDER BY ID DESC
+	</select>
+    
+     <!-- 流程列表 -->
+	<select id="listworkProcedure" parameterType="page" resultType="pd" useCache="false">
+	SELECT Id ,
+       Name ,
+       CodeNo ,
+       StartDate ,
+       Status ,
+       Description FROM dbo.T_GYL_Flow
+       WHERE Status = 1
+		<if test="pd.ProductName != null and pd.ProductName != ''">
+			and Name LIKE '%' + #{pd.Name} + '%'
+		</if>
+	</select>
+    
+    <!-- 新增流程信息 -->
+	<insert id="saveFlow" parameterType="pd" flushCache="false">		 
+ 		INSERT INTO dbo.T_GYL_Flow
+           (CodeNo,Name,StartDate,Description,Status)
+     	VALUES 
+     	 (#{CodeNo},#{Name},#{StartDate},#{Description},#{Status})
+        
+	</insert>
+	  <!-- 新增流程明细信息-->
+	<insert id="saveFlowDetail"  parameterType="list" flushCache="false">		 
+ 		INSERT INTO dbo.T_GYL_FlowDetail
+           (CodeNo,NodeName,SartRole,
+           	EndRole,FlowOrder,Comment)
+     	VALUES
+     	<!-- 这个是参数名称 -->
+     <foreach item="item" index="index" collection="list" separator="," >
+       	(#{item.CodeNo},#{item.NodeName},#{item.SartRole},
+       	#{item.EndRole},#{item.FlowOrder},#{item.Comment})
+     </foreach>   
+	</insert>
+    
+	<!--删除流程信息 -->
+	<delete id="deleteWorkFlow" parameterType="pd" flushCache="false">
+		delete from dbo.T_GYL_Flow
+		where CodeNo = #{CodeNo}
+	</delete>
+
+	<!--通过CodeNo查找 -->
+	<select id="findFlowByCodeNo" parameterType="pd" resultType="pd" useCache="false">
+		SELECT A.Id ,
+		       A.CodeNo ,
+		       A.Name ,
+		       B.MenuId,
+		       A.StartDate ,
+		       A.Description ,
+		       A.Status FROM dbo.T_GYL_Flow A
+		       LEFT JOIN dbo.T_GYL_MenuFlow B ON A.Id = B.FlowId
+				where A.CodeNo = #{CodeNo}
+	</select>
+	
+	<!--通过CodeNo查找明细信息 -->
+	<select id="findDetailByCodeNo" parameterType="pd" resultType="pd" useCache="false">
+		SELECT f.Id ,
+		       CodeNo ,
+		       NodeName ,
+		       FlowOrder,
+		       SartRole as RoleId,
+		       EndRole ,
+		       f.Comment , r.RoleName as SartRole FROM dbo.T_GYL_FlowDetail f, dbo.T_Admin_Role r
+		where CodeNo = #{CodeNo} AND f.SartRole = r.Id
+	</select>
+	
+	<!-- 修改采流程信息 -->
+	<update id="editFlow" parameterType="pd" flushCache="false">		 
+ 		UPDATE dbo.T_GYL_Flow set
+           CodeNo = #{CodeNo},
+           Name = #{Name},
+           StartDate = #{StartDate},
+           Description = #{Description},
+           Status = #{Status}
+           WHERE Id = #{Id}
+	</update>
+	
+	<!-- 删除流程明细信息-->
+	<delete id="deleteFlowDetail" parameterType="pd" flushCache="false">
+		delete from dbo.T_GYL_FlowDetail
+		where CodeNo = #{CodeNo}
+	</delete>
+	
+	<!-- 新增流程分配信息 -->
+	<insert id="savedistribution" parameterType="pd" flushCache="false">		 
+ 		INSERT INTO dbo.T_GYL_MenuFlow
+           (MenuId,FlowId)
+     	VALUES 
+     	 (#{menuId},#{flowId})
+	</insert>
+	
+	<!-- 删除流程分配信息-->
+	<delete id="deletedistribution" parameterType="pd" flushCache="false">
+		delete from dbo.T_GYL_MenuFlow
+		where FlowId = #{flowId}
+	</delete>
+	
+	
+	<!--通过MenuId查找中间表信息 -->
+	<select id="ValidationMenuFlow" parameterType="pd" resultType="pd" useCache="false">
+		SELECT MenuId ,
+			   FlowId FROM dbo.T_GYL_MenuFlow
+		where MenuId = #{menuId}
+	</select>
+</mapper>

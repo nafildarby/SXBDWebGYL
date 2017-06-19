@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="allotXMapper"> 
+    <cache type="org.mybatis.caches.ehcache.LoggingEhcache"/>   
+    
+    <!-- 查询所有的调拨信息 -->
+    <select id="allotlistPage" parameterType="pd" resultType="pd" useCache="false">
+			SELECT	 TOP 100 PERCENT 
+				a.Comment , 
+				a.AllocationNo ,
+				a.AllocationPerson ,
+				a.AllocationTime ,
+				a.Id , 
+	            a.Status , 
+	            a.ApprovalStatus,
+		       	b.WarehouseName AS OutWarehouseNo, 
+		       	c.WarehouseName AS InWarehouseNo 
+			FROM 
+				T_Warehouse_Allocation a, T_Warehouse_Warehouse b, T_Warehouse_Warehouse c
+			WHERE 
+				a.OutWarehouseNo = b.WarehouseNo AND a.InWarehouseNo = c.WarehouseNo and  a.Status =1
+		<if test="pd.AllocationNo != null and pd.AllocationNo != ''"><!-- 关键词检索 -->
+			and  a.AllocationNo LIKE '%' + #{pd.AllocationNo} + '%' 
+		</if> 
+		<if test="pd.ApprovalStatus != null and pd.ApprovalStatus != ''"><!-- 关键词检索 -->
+			and  a.ApprovalStatus = #{pd.ApprovalStatus}  
+		</if>  
+		ORDER BY AllocationTime DESC	
+	</select> 	 
+	 
+	 
+	<!-- 根据出库仓库查询商品信息 -->
+    <select id="WHNoGoodslistPage" parameterType="pd" resultType="pd" useCache="false">
+		 SELECT TOP 100 PERCENT 
+		  	p.Comment , 
+	        i.InventoryQuantity , 
+	        i.ProductBarCode ,
+	        p.ProductName ,  
+	        c.ComItemName,
+	        i.Id 
+		 FROM 
+		 	dbo.T_Product_ProductInfo p,dbo.T_Warehouse_Inventory i,dbo.T_System_ComboItem c
+		 WHERE 
+		 	i.ProductBarCode=p.BarCode AND p.ComboItemId=c.Id AND i.WarehouseNo=#{pd.WHNo}
+		 	
+		<if test="pd.ProductName != null and pd.ProductName != ''"><!-- 关键词检索 -->
+			and  p.ProductName LIKE '%' + #{pd.ProductName} + '%' 
+		</if> 
+		<if test="pd.BarCode != null and pd.BarCode != ''"><!-- 关键词检索 -->
+			and  i.ProductBarCode  LIKE '%' +  #{pd.BarCode}  + '%'
+		</if>  
+	</select>   
+	
+	<!-- 根据出库仓库和商品查询仓库商品信息 -->
+	<select id="findByWhsId" parameterType="pd" resultType="pd" useCache="false"> 
+	 	SELECT Id ,
+	       InventoryQuantity ,
+	       ProductBarCode ,
+	       Status ,
+	       WarehouseNo
+		FROM 
+			T_Warehouse_Inventory 
+		WHERE 
+			ProductBarCode=#{BarCode} AND WarehouseNo=#{WhsId}
+	</select>  
+	  
+	<!-- 根据入库仓库和商品查询仓库商品信息 -->
+	<select id="findByinWHNo" parameterType="pd" resultType="pd" useCache="false"> 
+	 	SELECT Id ,
+	       InventoryQuantity ,
+	       ProductBarCode ,
+	       Status ,
+	       WarehouseNo
+		FROM 
+			T_Warehouse_Inventory 
+		WHERE 
+			ProductBarCode=#{BarCode} AND WarehouseNo=#{inWHNo}
+	</select>  
+ 
+	<!-- 修改 -->
+	<update id="updateInventory" parameterType="pd" flushCache="false">
+		UPDATE 
+			T_Warehouse_Inventory
+		SET 
+		    InventoryQuantity = #{InventoryQuantity} 
+		WHERE 
+			Id  = #{Id}  
+	</update>
+	
+	<!-- 新增库存商品信息 -->
+	<insert id="saveInventory" parameterType="pd" flushCache="false">		 
+ 		INSERT INTO T_Warehouse_Inventory
+           (WarehouseNo,ProductBarCode,InventoryQuantity,Status)
+     	VALUES
+     	   (#{WarehouseNo},#{ProductBarCode},#{InventoryQuantity},#{Status}) 
+	</insert> 
+	  
+	
+	<!-- 新增入库信息 -->
+	<insert id="saveWhsOut" parameterType="pd" flushCache="false">		 
+ 		INSERT INTO  T_Warehouse_Allocation
+        	(AllocationNo,InWarehouseNo,OutWarehouseNo,AllocationPerson,AllocationTime,Comment,Status,ApprovalStatus)
+        VALUES  
+	      (#{AllocationNo},#{InWarehouseNo},#{OutWarehouseNo},#{AllocationPerson},#{AllocationTime},#{Comment},#{Status},#{ApprovalStatus})  
+	</insert>   
+	
+	  <!-- 这个是明细数据-->
+	<insert id="saveOutDetail"  parameterType="list" flushCache="false">		 
+ 		INSERT INTO T_Warehouse_AllocationDetail
+        	(AllocationNo,ProductName,BarCode,TotalNum,Unit,Comment)
+		VALUES        
+     	<!-- 这个是参数名称 -->
+     <foreach item="item" index="index" collection="list" separator="," >
+       	(#{item.AllocationNo},#{item.ProductName},#{item.ProductBarCode},#{item.DeployNum},#{item.ComItemName},#{item.Comment})
+     </foreach>    
+	</insert>   
+	
+	<!-- 查询出库的单商品列表信息 -->
+	<select id="findByAllotGoods" parameterType="pd" resultType="pd" useCache="false">
+		 SELECT 
+		 	AllocationNo ,
+	       	BarCode ,
+	       	Comment ,
+	       	Id ,
+	       	ProductName ,
+	       	Status ,
+	       	TotalNum ,
+	       	Unit
+		FROM 
+			T_Warehouse_AllocationDetail
+		WHERE 
+			AllocationNo=#{AllocationNo}
+	</select> 
+	
+	<!-- 查询出库的单据信息 -->
+	<select id="findByAllot" parameterType="pd" resultType="pd" useCache="false">
+			SELECT	  
+				a.Comment , 
+				a.AllocationNo ,
+				a.AllocationPerson ,
+				a.AllocationTime ,
+				a.Id , 
+	            a.Status , 
+	            a.OutWarehouseNo,
+	            a.InWarehouseNo,
+	            a.ApprovalStatus,
+		       	b.WarehouseName AS OutWarehouseName, 
+		       	c.WarehouseName AS InWarehouseName 
+			FROM 
+				T_Warehouse_Allocation a, T_Warehouse_Warehouse b, T_Warehouse_Warehouse c
+			WHERE 
+				a.OutWarehouseNo = b.WarehouseNo AND a.InWarehouseNo = c.WarehouseNo and a.AllocationNo=#{AllocationNo}
+	</select>  
+	
+	
+	<!-- 查询出库的单据信息 -->
+	<select id="findAllotById" parameterType="pd" resultType="pd" useCache="false">
+			SELECT  
+				AllocationNo ,
+		        AllocationPerson ,
+		        AllocationTime ,
+		        Comment ,
+		        Id ,
+		        InWarehouseNo ,
+		        OutWarehouseNo ,
+		        Status
+			FROM 
+				T_Warehouse_Allocation 
+			WHERE 
+				Id=#{Id}
+	</select>  
+	
+	
+	
+	<!-- 删除 -->
+	<delete id="deleteAllot" parameterType="pd" flushCache="false">
+		UPDATE 
+			T_Warehouse_Allocation
+		SET 
+		   	Status = 0
+		WHERE 
+			Id  = #{Id}  
+	</delete>
+	
+	<!-- 修改 -->
+	<update id="updateAllotDetail" parameterType="pd" flushCache="false">
+		UPDATE 
+			T_Warehouse_AllocationDetail
+		SET 
+		   	TotalNum = 0
+		WHERE 
+			Id  = #{Id}  
+	</update>
+
+	
+	<!-- 修改 -->
+	<update id="updateFlowStatus" parameterType="pd" flushCache="false">
+		UPDATE 
+			T_Warehouse_Allocation
+		SET 
+		    ApprovalStatus =#{auditStatus}
+		WHERE 
+			AllocationNo = #{ApplyNo}
+	</update> 
+	
+	
+	
+	
+</mapper>

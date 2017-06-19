@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="WHXMapper">
+	
+    <cache type="org.mybatis.caches.ehcache.LoggingEhcache"/>   
+	
+	<!-- 修改 -->
+	<update id="editWH" parameterType="pd" flushCache="false">
+		 update  T_Warehouse_Warehouse
+			set ParentNo 					= #{ParentNo},
+				WarehouseName				= #{WarehouseName},
+				WarehouseNo 				= #{WarehouseNo},
+				Comment						= #{Comment},
+				WarehouseStatus				= #{WarehouseStatus}, 	
+				Status						= #{Status}
+			where Id = #{Id} 
+	</update>
+	
+	<!-- 通过id获取数据 -->
+	<select id="findByWHId" parameterType="pd" resultType="pd" useCache="false">
+		SELECT  
+			Comment,Id,ParentNo,Status,WarehouseName,WarehouseNo,WarehouseStatus 
+		FROM 
+			T_Warehouse_Warehouse
+		where 
+			Id = #{Id} and Status=1	
+	</select> 
+	
+	
+	<!-- 查询子节点 -->
+	<select id="findByWHList" parameterType="pd" resultType="pd" useCache="false">
+		SELECT  
+        	h.Comment,h.Id,h.ParentNo,h.Status,h.WarehouseName,h.WarehouseNo,h.WarehouseStatus 
+        FROM 
+        	dbo.T_Warehouse_Warehouse w,dbo.T_Warehouse_Warehouse h 
+        WHERE 
+			w.WarehouseNo=h.ParentNo AND w.Id = #{Id} and h.Status=1	
+	</select>
+	
+	
+	<!-- 新增用户 -->
+	<insert id="saveWH" parameterType="pd" flushCache="false">		 
+ 		insert into T_Warehouse_Warehouse ( 
+			ParentNo,WarehouseName,WarehouseNo,WarehouseStatus,Status,Comment
+		) values ( 
+			#{ParentNo},#{WarehouseName},#{WarehouseNo},#{WarehouseStatus},#{Status},#{Comment}
+		)
+	</insert>
+	 
+	
+
+	<select id="listAllWH" resultType="pd" useCache="false">
+		SELECT  
+			Comment,Id,ParentNo,Status,WarehouseName,WarehouseNo,WarehouseStatus 
+		FROM 
+			T_Warehouse_Warehouse 
+		where 
+			Status=1	
+	</select>
+	
+
+	<select id="listAllPageWH" parameterType="page" resultType="pd" useCache="false">
+		SELECT  
+			Comment,Id,ParentNo,Status,WarehouseName,WarehouseNo,WarehouseStatus 
+		FROM 
+			T_Warehouse_Warehouse
+		where 
+			Status=1	
+	</select>
+	
+	<!-- 删除用户 -->
+	<delete id="deleteWH" parameterType="pd" flushCache="false">
+	 		update  T_Warehouse_Warehouse
+			set Status=0
+			where Id = #{Id} 
+		<!-- delete from 
+			T_Warehouse_Warehouse
+		where 
+			Id = #{Id} -->
+	</delete>
+	
+	 
+	
+</mapper>

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="applyXMapper"> 
+    <cache type="org.mybatis.caches.ehcache.LoggingEhcache"/>   
+    
+    <!-- 查询所有的调拨信息 -->
+    <select id="applylistPage" parameterType="pd" resultType="pd" useCache="false">
+		SELECT	 TOP 100 PERCENT 
+		 	   g.ApplyPerson ,
+		       g.ApplyTime ,
+		       g.ApprovalStatus ,
+		       g.Common ,
+		       g.GoodsApplyNo ,
+		       g.Id ,
+		       g.Status ,
+		       g.WHNo,
+		       w.WarehouseName      
+		FROM 
+			T_Product_GoodsApply g,T_Warehouse_Warehouse w
+		WHERE 
+			g.WHNo=w.WarehouseNo  and g.Status=1
+		<if test="pd.OutBoundNo != null and pd.OutBoundNo != ''"><!-- 关键词检索 -->
+			and   g.GoodsApplyNo LIKE '%' + #{pd.OutBoundNo} + '%' 
+		</if> 
+		<if test="pd.ApprovalStatus != null and pd.ApprovalStatus != ''"><!-- 关键词检索 -->
+			and   g.ApprovalStatus = #{pd.ApprovalStatus}  
+		</if> 
+		ORDER BY ApplyTime DESC	
+	</select> 	 
+
+	
+	<!-- 新增申请物料信息 -->
+	<insert id="saveApply" parameterType="pd" flushCache="false">		 
+ 	  INSERT INTO dbo.T_Product_GoodsApply
+        (GoodsApplyNo,WHNo,ApplyPerson,ApplyTime,Common,Status,ApprovalStatus)
+	  VALUES
+        (#{GoodsApplyNo},#{WhNo},#{ApplyPerson},#{ApplyTime},#{Common},#{Status},#{ApprovalStatus}) 
+	</insert>
+	
+	<!-- 这个是参数的类型-->
+	<insert id="saveApplyDetail"  parameterType="list" flushCache="false">		 
+ 		INSERT INTO dbo.T_Product_GoodsApplyDetail
+        	(GoodsApplyNo,ProductName,Barcode,Number,Unit,Common)
+		VALUES 
+     <!-- 这个是参数名称 -->
+     <foreach item="item" index="index" collection="list" separator="," >
+       	(#{item.GoodsApplyNo},#{item.ProductName},#{item.BarCode},#{item.Num},
+       	 #{item.ComItemName},#{item.Comment})
+     </foreach>   
+	</insert> 
+	
+	
+	<!-- 查询申请单据信息 -->
+    <select id="findByApply" parameterType="pd" resultType="pd" useCache="false">
+		SELECT	  
+		 	   g.ApplyPerson ,
+		       g.ApplyTime ,
+		       g.ApprovalStatus ,
+		       g.Common ,
+		       g.GoodsApplyNo ,
+		       g.Id ,
+		       g.Status ,
+		       g.WHNo,
+		       w.WarehouseName       
+		FROM 
+			T_Product_GoodsApply g,T_Warehouse_Warehouse w
+		WHERE 
+			g.WHNo=w.WarehouseNo  and g.GoodsApplyNo=#{GoodsApplyNo}
+	</select> 	 
+	
+	<!-- 查询申请单据商品信息 -->
+    <select id="findByApplyDetail" parameterType="pd" resultType="pd" useCache="false">
+		 SELECT 
+		 	Barcode ,
+		    Common ,
+		    GoodsApplyNo ,
+		    Id ,
+		    Number ,
+		    ProductName ,
+		    Unit
+		 FROM 
+		 	dbo.T_Product_GoodsApplyDetail
+		 WHERE  
+		 	GoodsApplyNo=#{GoodsApplyNo}
+	</select>
+	
+	
+	<!-- 修改 -->
+	<update id="updateFlowStatus" parameterType="pd" flushCache="false">
+		UPDATE 
+			T_Product_GoodsApply
+		SET 
+		    ApprovalStatus = #{auditStatus}
+		WHERE 
+			GoodsApplyNo = #{ApplyNo}
+	</update>
+	
+	 <!-- 修改 -->
+	<delete id="deleteApply" parameterType="pd" flushCache="false">
+		UPDATE 
+			T_Product_GoodsApply 
+		SET 
+			Status=0 
+		WHERE 
+			Id = #{Id}
+	</delete> 
+	 
+</mapper>

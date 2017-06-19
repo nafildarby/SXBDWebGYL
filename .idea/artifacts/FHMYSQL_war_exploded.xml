@@ -1,0 +1,13 @@
+<component name="ArtifactManager">
+  <artifact type="exploded-war" name="FHMYSQL:war exploded">
+    <output-path>$PROJECT_DIR$/WebRoot</output-path>
+    <root id="root">
+      <element id="directory" name="WEB-INF">
+        <element id="directory" name="classes">
+          <element id="module-output" name="FHMYSQL" />
+        </element>
+      </element>
+      <element id="javaee-facet-resources" facet="FHMYSQL/web/Web" />
+    </root>
+  </artifact>
+</component>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="StockXMapper"> 
+    <cache type="org.mybatis.caches.ehcache.LoggingEhcache"/>   
+    
+    <!-- 查询所有的调拨信息 -->
+    <select id="StocklistPage" parameterType="pd" resultType="pd" useCache="false">
+		SELECT	 
+			p.Abbreviation,p.CategoryId,p.ComboItemId,p.Comment,i.Id,i.InventoryQuantity,
+			p.Price,i.ProductBarCode,p.ProductName,p.ProductNo,p.SupplierId ,       
+	        i.WarehouseNo,c.ComItemName,s.EnterpriseName,cg.CategoryName,w.WarehouseName
+		FROM  
+			T_Product_ProductInfo p,T_Warehouse_Inventory i,T_Warehouse_Warehouse w,
+			T_System_ComboItem c,T_Admin_Supplier s,dbo.T_Product_Category cg
+		WHERE p.BarCode=i.ProductBarCode AND p.ComboItemId=c.Id AND i.WarehouseNo=w.WarehouseNo
+				AND p.SupplierId=s.Id AND p.CategoryId=cg.Id
+		<if test="pd.name != null and pd.name != ''"><!-- 关键词检索 -->
+			and  p.ProductName LIKE '%' + #{pd.name} + '%' 
+		</if>
+		<if test="pd.barcode != null and pd.barcode != ''"><!-- 关键词检索 -->
+			and  i.ProductBarCode LIKE '%' + #{pd.barcode}  
+		</if>   
+		<if test="pd.WHNo != null and pd.WHNo != ''"><!-- 关键词检索 -->
+			and  i.WarehouseNo = #{pd.WHNo} 
+		</if>
+		<if test="pd.Supplier != null and pd.Supplier != ''"><!-- 关键词检索 -->
+			and  p.SupplierId = #{pd.Supplier}  
+		</if>  
+	</select> 	 
+</mapper>

@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pickXMapper"> 
+    <cache type="org.mybatis.caches.ehcache.LoggingEhcache"/>   
+    
+     <!-- 查询所有的领料信息 -->
+    <select id="picklistPage" parameterType="pd" resultType="pd" useCache="false">
+			SELECT	 TOP 100 PERCENT 
+				p.ApprovalStatus , 
+		        p.Comment ,
+		        p.Id , 
+		        p.PickingNo ,
+		        p.PickingPerson ,
+		        p.PickingTime ,
+		        p.Status , 
+		        w.WarehouseName , 
+		        p.outWHNo
+			FROM 
+				dbo.T_Warehouse_Picking p,dbo.T_Warehouse_Warehouse w
+			WHERE 
+				p.outWHNo=w.WarehouseNo and p.Status = 1				
+		<if test="pd.PickingNo != null and pd.PickingNo != ''"><!-- 关键词检索 -->
+			and  p.PickingNo LIKE '%' + #{pd.PickingNo} + '%' 
+		</if> 
+		<if test="pd.ApprovalStatus != null and pd.ApprovalStatus != ''"><!-- 关键词检索 -->
+			and  p.ApprovalStatus = #{pd.ApprovalStatus}  
+		</if>  
+		ORDER BY PickingTime DESC	
+	</select> 	 
+	
+	
+	<!-- 查询所有的物料申请信息 -->
+    <select id="listGoodsApply" parameterType="pd" resultType="pd" useCache="false">
+			SELECT	 TOP 100 PERCENT 
+				   ApplyPerson ,
+			       ApplyTime ,
+			       ApprovalStatus ,
+			       Common ,
+			       GoodsApplyNo ,	
+			       Id ,
+			       Status ,
+			       WHNo
+			FROM 
+				T_Product_GoodsApply 
+			WHERE 
+				Status=1 	 
+			ORDER BY 
+				ApplyTime DESC	
+	</select> 	 
+	
+    
+    <!-- 查询物料申请的商品信息 -->
+    <select id="SelectByApply" parameterType="pd" resultType="pd" useCache="false">
+		SELECT Barcode ,
+		       Common ,
+		       GoodsApplyNo ,
+		       Id ,
+		       Number ,
+		       ProductName ,
+		       Unit 
+		FROM 
+			T_Product_GoodsApplyDetail 
+		WHERE 
+			GoodsApplyNo=#{GoodsApplyNo}
+	</select> 	 
+	 
+    
+    <!-- 新增领料单据商品信息 -->
+	<insert id="saveApplyPick" parameterType="pd" flushCache="false">		 
+ 		INSERT INTO T_Warehouse_Picking
+        	(PickingNo,outWHNo,PickingPerson,PickingTime,Comment,Status,ApprovalStatus,GoodsApplyNo)
+		VALUES 
+     	   (#{PickingNo},#{WHNo},#{PickingPerson},#{PickingTime},#{Comment},#{Status},#{ApprovalStatus},#{GoodsApplyNo}) 
+	</insert> 
+    
+    
+    <!-- 这个是明细数据-->
+	<insert id="savePickGoodsDetail"  parameterType="list" flushCache="false">		 
+ 		INSERT INTO	T_Warehouse_PickingDetail
+        	(PickingNo,ProductName,Barcode,ApplyNum,DeployNum,Common,Unit)
+		VALUES         
+     	<!-- 这个是参数名称 -->
+     <foreach item="item" index="index" collection="list" separator="," >
+       	(#{item.PickingNo},#{item.ProductName},#{item.Barcode},#{item.Number},
+       	 #{item.DeployNum},#{item.Common},#{item.Unit})
+     </foreach>    
+	</insert>     
+    
+    <!-- 查询领料单商品信息 -->
+	<select id="findGoodsByNo" parameterType="pd" resultType="pd" useCache="false">
+		 SELECT 
+		 	   ApplyNum ,
+		       Barcode ,
+		       Common ,
+		       DeployNum ,
+		       Id ,
+		       PickingNo ,
+		       ProductName ,
+		       Unit
+		FROM 
+			T_Warehouse_PickingDetail
+		WHERE 
+			PickingNo=#{PickingNo}
+	</select> 
+    
+    
+    <!-- 查询领料单信息 -->
+	<select id="findApplyDetailByNo" parameterType="pd" resultType="pd" useCache="false">
+		SELECT  
+			 p.ApprovalStatus ,
+	         p.Comment ,
+	         p.GoodsApplyNo ,
+	         p.Id ,
+	         p.outWHNo ,
+	         p.PickingNo ,
+	         p.PickingPerson ,
+	         p.PickingTime ,
+	         p.Status,
+	         w.WarehouseName
+		FROM 
+			T_Warehouse_Picking p,T_Warehouse_Warehouse w
+		WHERE 
+			p.outWHNo=w.WarehouseNo and p.PickingNo=#{PickingNo}
+	</select> 
+    
+    	
+	<!-- 删除 -->
+	<delete id="deletePick" parameterType="pd" flushCache="false">
+		UPDATE 
+			T_Warehouse_Picking
+		SET 
+		   	Status = 0
+		WHERE 
+			Id  = #{Id}  
+	</delete>
+	
+	<!-- 修改 -->
+	<update id="updateFlowStatus" parameterType="pd" flushCache="false">
+		UPDATE 
+			T_Warehouse_Picking
+		SET 
+		    ApprovalStatus =#{auditStatus}
+		WHERE 
+			PickingNo = #{ApplyNo}
+	</update> 
+    
+    
+    <!-- 查询物料申请单仓库信息 -->
+	<select id="findApplyWHNoByNo" parameterType="pd" resultType="pd" useCache="false">
+		 SELECT  
+		 	ApplyPerson ,
+	        ApplyTime ,
+	        ApprovalStatus ,
+	        Common ,
+	        GoodsApplyNo ,
+	        Id ,
+	        Status ,
+	        WHNo
+		FROM 
+			T_Product_GoodsApply 
+		WHERE 
+			GoodsApplyNo=#{GoodsApplyNo}
+	</select> 
+	 
+    
+</mapper>

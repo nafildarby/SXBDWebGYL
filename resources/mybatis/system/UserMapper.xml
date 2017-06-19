@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="UserMapper">
+	<sql id="userColumns">USERNAME,NAME,PASSWORD,RIGHTS,STATUS,ROLE_ID</sql>
+
+	<resultMap type="User" id="userAndRoleResultMap">
+		<id column="Id" property="USER_ID"/>
+		<result column="UserNo" property="USERNAME"/>
+		<result column="Password" property="PASSWORD"/>
+		<result column="UserName" property="NAME"/>
+		<result column="USER_RIGHTS" property="RIGHTS"/>
+		<!-- 
+		<result column="LAST_LOGIN" property="LAST_LOGIN"/>
+		<result column="IP" property="IP"/>
+		 -->
+		<result column="Status" property="STATUS"/>
+		 <!--
+		<result column="SKIN" property="SKIN"/>
+		-->
+		<association property="role" column="ROLE_ID" javaType="Role">
+			<id column="Id" property="ROLE_ID"/>
+			<result column="RoleName" property="ROLE_NAME"/>
+			<result column="ROLE_RIGHTS" property="RIGHTS"/>
+		</association>
+	</resultMap>
+	<resultMap type="User" id="userResultMap">
+		<id column="USER_ID" property="USER_ID"/>
+		<result column="USERNAME" property="USERNAME"/>
+		<result column="PASSWORD" property="PASSWORD"/>
+		<result column="NAME" property="NAME"/>
+		<result column="RIGHTS" property="RIGHTS"/>
+		<result column="LAST_LOGIN" property="LAST_LOGIN"/>
+		<result column="IP" property="IP"/>
+		<result column="STATUS" property="STATUS"/>
+		<result column="ROLE_ID" property="ROLE_ID"/>
+		<result column="SKIN" property="SKIN"/>
+	</resultMap>
+	
+	<!-- 判断用户名和密码 -->
+	<select id="getUserInfo" parameterType="User" resultMap="userResultMap">
+		select * from SYS_USER 
+		where 1=1
+		<if test="USERNAME!=null and PASSWORD!=null">
+		and USERNAME = #{USERNAME} and PASSWORD=#{PASSWORD}
+		</if>
+		<if test="USER_ID!=null and USER_ID>0">
+		and USER_ID = #{USER_ID}
+		</if>
+	</select>
+	
+	<select id="getUserAndRoleById" parameterType="String" resultMap="userAndRoleResultMap">
+		select  u.Id,
+				u.UserNo,
+				u.UserName,
+				u.Rights as USER_RIGHTS,
+				u.Password,
+				r.Id,
+				r.RoleName,
+				r.Rights as ROLE_RIGHTS 
+		from T_Admin_Employee u 
+		left join T_Admin_Role r 
+		on u.RoleId=r.Id 
+		where u.Status=1 
+		and u.Id=#{USER_ID}
+	</select>
+
+	<update id="updateLastLogin" parameterType="User">
+		update SYS_USER set 
+		LAST_LOGIN=#{LAST_LOGIN} 
+		where USER_ID=#{USER_ID}
+	</update>
+	
+</mapper>

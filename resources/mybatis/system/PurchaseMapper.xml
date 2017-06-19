@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="PurchaseMapper">
+	
+	<!-- 修改采购单 -->
+	<update id="editP" parameterType="pd" flushCache="false">
+		update  T_Purchase_PurchaseOrder
+			set PurchaseNo 					= #{PurchaseNo},
+				OrderPerson					= #{OrderPerson},
+				OrderTime 					= #{OrderTime},
+				Comment						= #{Comment},
+			where Id = #{Id}
+	</update>
+	
+	<!-- 通过Id获取采购单数据 -->
+	<select id="findByPid" parameterType="pd" resultType="pd" useCache="false">
+		select 
+			Id as Id,
+			PurchaseNo,
+			OrderPerson,
+			OrderTime,
+			Comment
+		from 
+			T_Purchase_PurchaseOrder
+		where 
+			Id = #{Id}
+	</select>
+	
+	<!-- 新增采购单据信息 -->
+	<insert id="saveP" parameterType="pd" flushCache="false">
+		insert into T_Purchase_PurchaseOrder ( 
+			PurchaseNo,
+			OrderPerson,
+			OrderTime,
+			Comment,
+			STATUS,
+		) values ( 
+			#{PurchaseNo},
+			#{OrderPerson},
+			#{OrderTime},
+			#{Comment},
+			#{STATUS}, 
+			#{STATUS}
+		)
+	</insert>
+	
+	<!-- 删除采购单据信息 -->
+	<delete id="deleteP" parameterType="pd" flushCache="false">
+		delete from T_Purchase_PurchaseOrder
+		where Id = #{PURCHASE_ID}
+	</delete>
+	
+	<!-- 采购单列表 -->
+	<select id="purchaselistPage" parameterType="page" resultType="pd" useCache="false">
+		select  TOP 100 PERCENT
+				Id,
+				PurchaseNo,
+				OrderPerson,
+				OrderTime,
+				Comment,
+				Status
+		from T_Purchase_PurchaseOrder
+		ORDER BY Id desc
+	</select>
+	
+	
+	<!-- 商品列表 -->
+	<select id="PurchaseList" parameterType="page" resultType="pd" useCache="false">
+		select  Id,
+				PurchaseNo,
+				OrderPerson,
+				OrderTime,
+				Comment,
+				Status
+		from T_Purchase_PurchaseOrder
+	</select>
+</mapper>

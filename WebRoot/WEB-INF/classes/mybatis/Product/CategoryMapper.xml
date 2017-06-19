@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="CategoryMapper">
+	
+    <cache type="org.mybatis.caches.ehcache.LoggingEhcache"/>  
+    
+    <!-- 类型列表 -->
+	<select id="listAllcategory" parameterType="page" resultType="pd" useCache="false">
+		SELECT 
+			Id,ParentId,CategoryName,Status 
+       	FROM 
+       		dbo.T_Product_Category
+	</select>
+	
+	
+	<!-- 修改 -->
+	<update id="editCate" parameterType="pd" flushCache="false">
+		 	update  T_Product_Category
+			set  	ParentId		    = #{ParentId},
+				 	CategoryName        = #{CategoryName},
+				 	Status				= #{Status} 
+			where 	Id = #{Id} 
+	</update>
+	
+	<!-- 通过id获取数据 -->
+	<select id="findByCateId" parameterType="pd" resultType="pd" useCache="false">
+		SELECT  
+			CategoryName,Id,ParentId,Status 
+		FROM 
+			T_Product_Category
+		where 
+			Status=1 and Id = #{Id} 
+	</select> 
+	
+	
+	<!-- 查询子节点 -->
+	<select id="findByCategoryList" parameterType="pd" resultType="pd" useCache="false">
+		SELECT 
+			g.CategoryName,g.Id,g.ParentId,g.Status 
+		FROM 
+			T_Product_Category c,T_Product_Category g 
+		WHERE 
+			c.Id=g.ParentId  and g.Status=1 AND c.Id= #{Id}  
+	</select>
+	
+	
+	<!-- 新增用户 -->
+	<insert id="saveCate" parameterType="pd" flushCache="false">		 
+ 		insert into T_Product_Category ( 
+			 CategoryName,ParentId,Status
+		) values ( 
+			#{CategoryName},#{ParentId},#{Status}
+		)
+	</insert>
+	 
+	
+
+	<select id="listAllCate" resultType="pd" useCache="false">
+		SELECT  
+			CategoryName,Id,ParentId,Status 
+		FROM 
+			T_Product_Category
+		where 
+			Status=1	
+	</select>
+	
+
+	<select id="listAllPageCate" parameterType="page" resultType="pd" useCache="false">
+		SELECT  
+			CategoryName,Id,ParentId,Status 
+		FROM 
+			T_Product_Category
+		where 
+			Status=1	
+	</select>
+	
+	<!-- 删除用户 -->
+	<delete id="deleteCategory" parameterType="pd" flushCache="false">
+	 		UPDATE T_Product_Category   
+			set Status=0
+			where Id = #{Id}  
+	</delete>
+	
+ 
+	
+	
+</mapper>

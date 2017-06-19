@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="scrapXMapper"> 
+    <cache type="org.mybatis.caches.ehcache.LoggingEhcache"/>   
+    
+    <!-- 查询所有的报废申请信息 -->
+    <select id="scraplistPage" parameterType="pd" resultType="pd" useCache="false">
+			SELECT  TOP 100 PERCENT  
+		        w.WarehouseName ,
+		        s.ScrappedNo,
+		        s.ScrappedPerson,
+		        s.ScrappedTime,
+		        s.Status,
+		        s.Id,
+		        s.ApprovalStatus		        
+			FROM 
+				T_Warehouse_Scrapped s,dbo.T_Warehouse_Warehouse w
+			WHERE 
+				s.WarehouseNo=w.WarehouseNo and  s.Status=1
+		 <if test="pd.ScrappedNo != null and pd.ScrappedNo != ''"><!-- 关键词检索 -->
+			    AND s.ScrappedNo LIKE '%' + #{pd.ScrappedNo} + '%' 
+		 </if> 
+		 ORDER BY ScrappedTime DESC
+	</select> 	 
+	 
+	 
+	 
+	 
+	<!-- 根据仓库查询商品信息 -->
+    <select id="scrapGoods" parameterType="pd" resultType="pd" useCache="false">
+		SELECT 
+		   	i.WarehouseNo,i.ProductBarCode,p.ProductName 
+		FROM 
+			T_Warehouse_Inventory i,T_Product_ProductInfo p
+		WHERE 
+			p.BarCode=i.ProductBarCode AND i.WarehouseNo=#{WHNo} 
+	</select>   
+	
+	
+	
+	<!-- 根据仓库和商品查询仓库商品信息 -->
+	<select id="findByWhsId" parameterType="pd" resultType="pd" useCache="false"> 
+	 	 SELECT Id ,
+	       InventoryQuantity ,
+	       ProductBarCode ,
+	       Status ,
+	       WarehouseNo
+		FROM 
+			T_Warehouse_Inventory 
+		WHERE 
+			ProductBarCode=#{BarCode} AND WarehouseNo=#{WarehouseNo}
+	</select>   
+	  
+	  
+	<!-- 新增报废信息 -->
+	<insert id="saveScrap" parameterType="pd" flushCache="false">		 
+ 		INSERT INTO T_Warehouse_Scrapped
+        	( ScrappedNo,WarehouseNo,ScrappedPerson,ScrappedTime,Comment,Status,ApprovalStatus)
+		VALUES 
+	      	(#{ScrappedNo},#{WarehouseNo},#{ScrappedPerson},#{ScrappedTime},#{Comment},#{Status},#{ApprovalStatus})  
+	</insert>      
+	 
+	<!-- 这个是明细数据-->
+	<insert id="saveScrapDetail"  parameterType="list" flushCache="false">		 
+ 		INSERT INTO T_Warehouse_ScrappedDetail
+        	(ScrappedNo , ProductName , Number , BarCode , Comment)
+		VALUES         
+     <!-- 这个是参数名称 -->
+     <foreach item="item" index="index" collection="list" separator="," >
+       	(#{item.ScrappedNo},#{item.ProductName},#{item.Number},#{item.ProductBarCode},#{item.Comment})
+     </foreach>    
+	</insert>      
+	
+	<!-- 查询报废单商品列表信息 -->
+	<select id="findByGoods" parameterType="pd" resultType="pd" useCache="false"> 
+		SELECT  
+			BarCode ,
+	        Comment ,
+	        Id ,
+	        Number ,
+	        Price ,
+	        ProductName ,
+	        ScrappedNo ,
+	        Unit
+ 		FROM 
+			T_Warehouse_ScrappedDetail 
+		WHERE 
+			ScrappedNo=#{ScrappedNo}
+	</select>
+	
+	<!-- 查询单据信息 -->
+	<select id="findByScrap" parameterType="pd" resultType="pd" useCache="false">
+		SELECT 
+	       s.Id , 
+		   s.Comment , 
+	       s.ScrappedNo ,
+	       s.ScrappedPerson ,
+	       s.ScrappedTime ,
+	       s.Status , 
+	       w.WarehouseName ,
+	       s.WarehouseNo,
+	       s.ApprovalStatus 
+		FROM 
+			T_Warehouse_Scrapped s,T_Warehouse_Warehouse w
+		WHERE 
+			s.WarehouseNo=w.WarehouseNo AND s.ScrappedNo=#{ScrappedNo}
+	</select>  
+	
+	<!-- 删除入库信息 -->
+	<delete id="deleteScrap" parameterType="pd" flushCache="false"> 
+		 UPDATE 
+		 	T_Warehouse_Scrapped 
+		 SET 
+		 	Status=0 
+		 WHERE 
+		 	Id= #{Id}  
+	</delete>
+	
+	<!-- 修改 -->
+	<update id="updateInventory" parameterType="pd" flushCache="false">
+		UPDATE 
+			T_Warehouse_Inventory
+		SET 
+		    InventoryQuantity = #{Quantity}
+		WHERE 
+			Id  = #{Id}  
+	</update>
+	
+		
+	<!-- 修改 -->
+	<update id="updateFlowStatus" parameterType="pd" flushCache="false">
+		UPDATE 
+			T_Warehouse_Scrapped
+		SET 
+		    ApprovalStatus =#{auditStatus}
+		WHERE 
+			ScrappedNo = #{ApplyNo}
+	</update> 
+</mapper>

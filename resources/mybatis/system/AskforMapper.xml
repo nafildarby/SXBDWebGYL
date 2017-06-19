@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="AskforMapper">
+	
+    <cache type="org.mybatis.caches.ehcache.LoggingEhcache"/>  
+    
+    <!-- 采购申请分页 -->
+	<select id="listPageAskfor" parameterType="page" resultType="pd" useCache="false">
+		SELECT TOP 100 PERCENT
+			   Id ,
+		       askforNo ,
+		       askforPerson ,
+		       askforTime ,
+		       IsSummary ,
+		       AuditStatus ,
+		       Comment,
+       Status FROM dbo.T_Purchase_AskFor
+		WHERE Status = 1
+		<if test="pd.AskforNo != null and pd.AskforNo != ''">
+			and askforNo LIKE '%' + #{pd.AskforNo} + '%'
+		</if>  
+		<if test="pd.AskforPerson != null and pd.AskforPerson != ''">
+			and askforPerson LIKE '%' + #{pd.AskforPerson} + '%'
+		</if> 
+		ORDER BY ID DESC
+	</select>
+    
+     <!-- 采购申请列表 -->
+	<select id="listAskfor" parameterType="page" resultType="pd" useCache="false">
+		SELECT Id ,
+		       askforNo ,
+		       askforPerson ,
+		       askforTime ,
+		       IsSummary ,
+		       AuditStatus ,
+		       Comment,
+       Status FROM dbo.T_Purchase_AskFor
+		WHERE Status = 1
+		<if test="pd.AskforNo != null and pd.AskforNo != ''">
+			and askforNo LIKE '%' + #{pd.AskforNo} + '%'
+		</if>  
+		<if test="pd.AskforPerson != null and pd.AskforPerson != ''">
+			and askforPerson LIKE '%' + #{pd.AskforPerson} + '%'
+		</if> 
+	</select>
+	
+	 <!-- 未审核采购申请列表 -->
+	<select id="listAskforAudit" parameterType="page" resultType="pd" useCache="false">
+		SELECT Id ,
+		       askforNo ,
+		       askforPerson ,
+		       askforTime ,
+		       IsSummary ,
+		       AuditStatus ,
+		       Comment,
+       Status FROM dbo.T_Purchase_AskFor
+		WHERE Status = 1 and AuditStatus = 0
+		<if test="pd.AskforNo != null and pd.AskforNo != ''">
+			and askforNo LIKE '%' + #{pd.AskforNo} + '%'
+		</if>  
+		<if test="pd.AskforPerson != null and pd.AskforPerson != ''">
+			and askforPerson LIKE '%' + #{pd.AskforPerson} + '%'
+		</if> 
+	</select>
+	
+	 <!-- 未审核采购申请分页 -->
+	<select id="listAskforAuditPage" parameterType="page" resultType="pd" useCache="false">
+		SELECT Id ,
+		       askforNo ,
+		       askforPerson ,
+		       askforTime ,
+		       IsSummary ,
+		       AuditStatus ,
+		       Comment,
+       Status FROM dbo.T_Purchase_AskFor
+		WHERE Status = 1 and AuditStatus = 0
+		<if test="pd.AskforNo != null and pd.AskforNo != ''">
+			and askforNo LIKE '%' + #{pd.AskforNo} + '%'
+		</if>  
+		<if test="pd.AskforPerson != null and pd.AskforPerson != ''">
+			and askforPerson LIKE '%' + #{pd.AskforPerson} + '%'
+		</if> 
+		ORDER BY ID DESC
+	</select>
+    
+    <!-- 删除采购申请-->
+	<delete id="deleteAskfor" parameterType="pd" flushCache="false">
+		delete from dbo.T_Purchase_AskFor
+		where Id = #{APPLICATION_ID}
+	</delete>
+	
+	<!-- 新增采购商品信息 -->
+	<insert id="saveAskfor" parameterType="pd" flushCache="false">		 
+ 		INSERT INTO dbo.T_Purchase_AskFor
+           (AskforNo,AskforPerson,AskforTime,IsSummary,AuditStatus,Comment,Status)
+     	VALUES 
+     	 (#{AskforNo},#{AskforPerson},#{AskforTime},#{IsSummary},#{AuditStatus},#{Comment},#{Status})
+        
+	</insert>
+	  <!-- 新增采购商品明细-->
+	<insert id="saveAskforDetail"  parameterType="list" flushCache="false">		 
+ 		INSERT INTO dbo.T_Purchase_AskForDetail
+           (AskforNo,ProductName,BarCode,
+           	Quantity,ComItemName,Price,EnterpriseName,Comment)
+     	VALUES
+     	<!-- 这个是参数名称 -->
+     <foreach item="item" index="index" collection="list" separator="," >
+       	(#{item.AskforNo},#{item.ProductName},#{item.BarCode},
+       	#{item.Quantity},#{item.ComItemName},#{item.Price},#{item.EnterpriseName},#{item.Comment})
+     </foreach>   
+	</insert>
+	
+		<!-- 通过采购编号获取数据 -->
+	<select id="findAskforByAskNo" parameterType="pd" resultType="pd" useCache="false">
+		SELECT Id ,
+	       AskforNo ,
+	       AskforPerson ,
+	       AskforTime ,
+	       IsSummary ,
+	       AuditStatus ,
+	       Comment ,
+     	  Status FROM dbo.T_Purchase_AskFor
+	 	WHERE 
+	 		AskforNo = #{AskforNo}
+	</select>
+	
+	<!-- 通过采购申请编号获取明细数据 -->
+	<select id="findDetailByAskNo" parameterType="pd" resultType="pd" useCache="false">
+		 SELECT Id ,
+	       AskforNo ,
+	       ProductName ,
+	       Abbreviation ,
+	       BarCode ,
+	       Quantity ,
+	       ComItemName ,
+	       Price ,
+	       EnterpriseName ,
+	       Comment ,
+	       Status ,
+	       StorageQuantity FROM dbo.T_Purchase_AskForDetail
+		 WHERE 
+		 	AskforNo = #{AskforNo} 
+	</select>
+	
+	<!-- 修改采购申请信息 -->
+	<update id="editAskfor" parameterType="pd" flushCache="false">		 
+ 		UPDATE dbo.T_Purchase_AskFor set
+           AskforNo = #{AskforNo},
+           AskforPerson = #{AskforPerson},
+           IsSummary = #{IsSummary},
+           AuditStatus = #{AuditStatus},
+           Comment = #{Comment},
+           Status = #{Status}
+           WHERE AskforNo = #{AskforNo}
+	</update>
+	
+	    <!-- 删除采购申请明细-->
+	<delete id="deleteAskforDetail" parameterType="pd" flushCache="false">
+		delete from dbo.T_Purchase_AskForDetail
+		where AskforNo = #{AskforNo}
+	</delete>
+
+	<!--提交审批申请后改变申请单状态-->
+	<update id="updateFlowStatus" parameterType="pd" flushCache="false">
+		UPDATE dbo.T_Purchase_AskFor set
+		AuditStatus = #{auditStatus}
+		WHERE AskforNo = #{ApplyNo}
+	</update>
+	
+	<!-- 查询审批信息 -->
+	<select id="findApplyByNo" parameterType="pd" resultType="pd" useCache="false">
+		SELECT 
+			ApplyNo,ApplyTime,FlowOrder,NodeName,UserName,Common  
+		FROM 
+			T_GYL_ApplyRecord
+		WHERE
+			ApplyNo=#{AskforNo} 
+	</select>   
+	
+		<!-- 查询采购申请的单据信息 -->
+	<select id="findByAskfor" parameterType="pd" resultType="pd" useCache="false">
+				SELECT Id ,
+                       AskforNo ,
+                       AskforPerson ,
+                       AskforTime ,
+                       IsSummary ,
+                       AuditStatus ,
+                       Comment ,
+                       Status FROM dbo.T_Purchase_AskFor
+                       WHERE AskforNo=#{AskforNo}
+	</select>  
+	
+	<!-- 结束审核 -->
+	<update id="endApply" parameterType="pd" flushCache="false">		 
+ 		UPDATE dbo.T_Purchase_AskFor set
+           AuditStatus = #{AuditStatus},
+           Comment = #{Comment}
+           WHERE AskforNo = #{AskforNo}
+	</update>
+	
+</mapper>

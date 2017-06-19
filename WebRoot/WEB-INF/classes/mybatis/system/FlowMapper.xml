@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="FlowMapper">
+
+	<!-- 修改采购单 -->
+	<update id="editP" parameterType="pd" flushCache="false">
+		update
+		T_Purchase_PurchaseOrder
+		set PurchaseNo = #{PurchaseNo},
+		OrderPerson = #{OrderPerson},
+		OrderTime = #{OrderTime},
+		Comment = #{Comment},
+		where Id = #{Id}
+	</update>
+
+	<!-- 根据申请单号查询当前申请表中是否已经存在当前单据的审核流程 -->
+	<select id="findFlowInfo" parameterType="pd" resultType="pd"
+		useCache="false">
+		select
+		a.Id as Id,
+		FlowNo,
+		MenuName,
+		ApplyNo,
+		ApplyTime,
+		Status,
+		FlowName,
+		CurrentStep,
+		b.EndRole
+		from
+		T_GYL_ApplyAudit a
+		LEFT JOIN T_GYL_FlowDetail b ON a.FlowNo = b.CodeNo
+		where
+		a.CurrentStep = b.FlowOrder and
+		ApplyNo = #{ApplyNo}
+	</select>
+
+
+	<!-- 根据菜单和角色查询需要在审批成表添加的流程信息 -->
+	<select id="findFlowByUrlAndRole" parameterType="pd" resultType="pd"
+		useCache="false">
+		SELECT A.MenuId,
+		A.FlowId,
+		B.CodeNo,
+		B.Name,
+		B.StartDate,
+		B.Status,
+		C.NodeName,
+		C.SartRole,
+		C.EndRole,
+		C.FlowOrder,
+		C.Comment FROM
+		T_GYL_MenuFlow A
+		LEFT JOIN T_GYL_Flow B ON A.FlowId = B.Id
+		LEFT JOIN T_GYL_FlowDetail C ON B.CodeNo = C.CodeNo
+		WHERE A.MenuId = #{menuId} AND c.SartRole= #{userRoleId} AND c.FlowOrder=0
+	</select>
+
+	<!--首次提交审批申请，插入审批数据 -->
+	<insert id="insertApplyFlow" parameterType="pd" flushCache="false">
+		insert into T_GYL_ApplyAudit (
+		FlowNo,
+		MenuName,
+		ApplyNo,
+		ApplyTime,
+		Status,
+		FlowName,
+		CurrentStep
+		) values (
+		#{CodeNo},
+		#{memuName},
+		#{ApplyNo},
+		#{applyTime},
+		#{status},
+		#{Name},
+		#{FlowOrder}
+		)
+	</insert>
+
+
+	<!--插入审批记录数据 -->
+	<insert id="insertApplyRecord" parameterType="pd" flushCache="false">
+		INSERT INTO T_GYL_ApplyRecord
+		(ApplyNo,ApplyTime,FlowOrder,NodeName,UserName,Common)
+		VALUES
+		(#{ApplyNo},#{ApplyTime},#{FlowOrder},#{NodeName},#{UserName},#{Common})
+	</insert>
+
+	<!-- 删除采购单据信息 -->
+	<delete id="deleteP" parameterType="pd" flushCache="false">
+		delete from
+		T_Purchase_PurchaseOrder
+		where Id = #{PURCHASE_ID}
+	</delete>
+
+	<!--处理审批流程 -->
+	<update id="updateApplyFlow" parameterType="pd" flushCache="false">
+		UPDATE dbo.T_GYL_ApplyAudit set
+		CurrentStep = #{CurrentStep} + 1
+		WHERE
+		Id = #{Id}
+	</update>
+
+	<!-- 根据菜单和角色查询需要在审批成表添加的流程信息 -->
+	<select id="findFlowInfoByApplyNo" parameterType="pd"
+		resultType="pd" useCache="false">
+		SELECT
+		a.FlowNo,
+		a.ApplyNo,
+		a.CurrentStep,
+		B.SartRole,
+		B.EndRole
+		FROM T_GYL_ApplyAudit a
+		LEFT JOIN T_GYL_FlowDetail
+		B ON a.FlowNo = b.CodeNo
+		WHERE a.CurrentStep + 1 = b.FlowOrder AND
+		a.ApplyNo = #{ApplyNo}
+	</select>
+
+
+	<!-- 查询审批明细信息 -->
+	<select id="findDetail" parameterType="pd" resultType="pd"
+		useCache="false">
+		SELECT
+		f.CodeNo ,
+		f.Comment ,
+		f.EndRole ,
+		f.FlowOrder ,
+		f.Id ,
+		f.NodeName ,
+		f.SartRole ,
+		r.RoleName
+		FROM
+		T_GYL_FlowDetail f,T_GYL_ApplyAudit a,T_Admin_Role r
+		WHERE
+		f.CodeNo=a.FlowNo AND f.SartRole=r.Id and a.ApplyNo=#{ApplyNo}
+		order by f.FlowOrder
+	</select>
+
+	<!-- 查询审批流水信息 -->
+	<select id="findApplyByNo" parameterType="pd" resultType="pd"
+		useCache="false">
+		SELECT
+		ApplyNo,ApplyTime,FlowOrder,NodeName,UserName,Common
+		FROM
+		T_GYL_ApplyRecord
+		WHERE
+		ApplyNo = #{ApplyNo}
+	</select>
+	
+	<!-- 查询审批流水信息 -->
+	<select id="findNodeNameByNo" parameterType="pd" resultType="pd" useCache="false">
+		 SELECT
+			a.Id as Id,
+			FlowNo,
+			MenuName,
+			ApplyNo,
+			ApplyTime,
+			Status,
+			FlowName,
+			CurrentStep,
+			b.EndRole,
+			b.NodeName,
+			b.FlowOrder		
+		from
+			T_GYL_ApplyAudit a,T_GYL_FlowDetail b 
+		where 
+			a.FlowNo = b.CodeNo AND b.FlowOrder =#{CurrentStep}+1 and ApplyNo =#{ApplyNo}
+	</select>
+	
+	
+	<!-- 修改 -->
+	<update id="updateApplyAudit" parameterType="pd" flushCache="false">
+		UPDATE 
+			T_GYL_ApplyAudit
+		SET 
+		    Status =1
+		WHERE 
+			ApplyNo = #{ApplyNo}
+	</update> 
+</mapper>

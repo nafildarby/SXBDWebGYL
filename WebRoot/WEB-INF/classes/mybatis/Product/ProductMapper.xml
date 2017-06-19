@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ProductMapper">
+	
+    <cache type="org.mybatis.caches.ehcache.LoggingEhcache"/>  
+    
+    <!-- 商品列表 -->
+	<select id="pdlistPage" parameterType="page" resultType="pd" useCache="false">
+		SELECT  TOP 100 PERCENT
+				p.Abbreviation ,
+		        p.BarCode ,
+		        p.CategoryId ,
+		        c.CategoryName ,
+		        p.ComboItemId ,
+		        p.Comment ,
+		        p.Id , 
+		        p.IsGroup ,
+		        p.IsLease ,
+		        p.LeaseType , 
+		        p.Pledge ,
+		        p.Price ,
+		        p.ProductName ,
+		        p.ProductNo ,
+		        p.Rental ,
+		        p.SpareCode ,
+		        p.Status , 
+		        p.SupplierId ,
+		        p.TimingId,
+		        s.EnterpriseName,
+		        cb.ComItemName
+	    FROM dbo.T_Product_ProductInfo p,dbo.T_Product_Category c,dbo.T_Admin_Supplier s,T_System_ComboItem cb
+		WHERE p.CategoryId=c.Id and p.SupplierId = s.Id AND p.ComboItemId=cb.Id
+		<if test="pd.ProductName != null and pd.ProductName != ''">
+			and p.ProductName LIKE '%' + #{pd.ProductName} + '%'
+		</if>  
+		<if test="pd.ProductNo != null and pd.ProductNo != ''">
+			and p.ProductNo LIKE '%' + #{pd.ProductNo} + '%'
+		</if>
+		<if test="pd.BarCode != null and pd.BarCode != ''">
+			and p.BarCode LIKE '%' + #{pd.BarCode} + '%'
+		</if>
+		ORDER BY ID DESC
+	</select>
+    
+     <!-- 商品列表 -->
+	<select id="pdlist" parameterType="page" resultType="pd" useCache="false">
+	SELECT  p.Abbreviation ,
+		        p.BarCode ,
+		        p.CategoryId ,
+		        c.CategoryName ,
+		        p.ComboItemId ,
+		        p.Comment ,
+		        p.Id , 
+		        p.IsGroup ,
+		        p.IsLease ,
+		        p.LeaseType , 
+		        p.Pledge ,
+		        p.Price ,
+		        p.ProductName ,
+		        p.ProductNo ,
+		        p.Rental ,
+		        p.SpareCode ,
+		        p.Status , 
+		        p.SupplierId ,
+		        p.TimingId,
+		        s.EnterpriseName,
+		        cb.ComItemName
+	    FROM dbo.T_Product_ProductInfo p,dbo.T_Product_Category c,dbo.T_Admin_Supplier s,dbo.T_System_ComboItem cb
+		WHERE p.CategoryId=c.Id	AND p.SupplierId=s.Id AND p.ComboItemId=cb.Id
+		<if test="pd.ProductName != null and pd.ProductName != ''">
+			and p.ProductName LIKE '%' + #{pd.ProductName} + '%'
+		</if>  
+		<if test="pd.ProductNo != null and pd.ProductNo != ''">
+			and p.ProductNo LIKE '%' + #{pd.ProductNo} + '%'
+		</if>
+		<if test="pd.BarCode != null and pd.BarCode != ''">
+			and p.BarCode LIKE '%' + #{pd.BarCode} + '%'
+		</if>	 
+	</select>
+    
+    <!-- 删除商品-->
+	<delete id="deleteProduct" parameterType="pd" flushCache="false">
+		delete from T_Product_ProductInfo
+		where Id = #{Id}
+	</delete>
+	
+	
+	<!-- 添加 -->
+	<insert id="saveProduct" parameterType="pd" flushCache="false">
+		insert into T_Product_ProductInfo (
+			CategoryId,
+			ComboItemId,
+			TimingId,
+			ProductNo,
+			ProductName,
+			Abbreviation,
+			BarCode,
+			SpareCode,
+			Price,
+			Pledge,
+			Rental,
+			IsLease,
+			LeaseType,
+			IsGroup,
+			SupplierId,
+			Comment,
+			Status,
+			TaxRate
+		) values (
+			#{CategoryId},
+			#{ComboItemId},
+			#{TimingId},
+			#{ProductNo},
+			#{ProductName},
+			#{Abbreviation},
+			#{BarCode},
+			#{SpareCode},
+			#{Price},
+			#{Pledge},
+			#{Rental},
+			#{IsLease},
+			#{LeaseType},
+			#{IsGroup},
+			#{SupplierId},
+			#{Comment},
+			#{Status},
+			#{TaxRate}
+		)
+	</insert>
+	
+	<!-- 通过id查找 -->
+	<select id="findObjectById" parameterType="pd" resultType="pd">
+		SELECT Id ,
+		       CategoryId ,
+		       ComboItemId ,
+		       TimingId ,
+		       ProductNo ,
+		       ProductName ,
+		       Abbreviation ,
+		       BarCode ,
+		       SpareCode ,
+		       Price ,
+		       Pledge ,
+		       Rental ,
+		       IsLease ,
+		       LeaseType ,
+		       IsGroup ,
+		       SupplierId ,
+		       Comment ,
+		       Status FROM T_Product_ProductInfo
+		where Id = #{Id}
+	</select>
+	
+	<!-- 编辑商品信息 -->
+	<update id="editProduct" parameterType="pd">
+		update T_Product_ProductInfo 
+		set CategoryId 				= #{CategoryId},
+			ComboItemId				= #{ComboItemId},
+			ProductNo 				= #{ProductNo},
+			ProductName				= #{ProductName},
+			BarCode					= #{BarCode}, 
+			Price					= #{Price},
+			SupplierId				= #{SupplierId},
+			Status					= #{STATUS}
+		where Id = #{Id}
+	</update>
+</mapper>
